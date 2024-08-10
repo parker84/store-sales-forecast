@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-from plotly import express as px
 
 st.title("EDA on Training Data 🚊")
 st.caption("Exploratory Data Analysis on the Training Data")
@@ -24,3 +23,7 @@ with st.expander('Sales 🏪 By Store'):
 with st.expander('Sales 🪒 By Family'):
     item_sales = train_df.groupby('family')['sales'].sum()
     st.bar_chart(item_sales)
+
+with st.expander('The 🛠️ Code'):
+    with open('views/eda_train.py') as f:
+        st.code(f.read())
