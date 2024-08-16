@@ -4,7 +4,28 @@ from sklearn.model_selection import train_test_split
 import os
 from tqdm import tqdm
 import logging, coloredlogs
+from io import StringIO
+import streamlit as st
+
+st.title("Making Training Datasets 📦")
+st.caption("Cleaning the Data, Engineering Features, and :axe: splitting the data into training, validation, and holdout sets.")
+
+# Set up a StringIO to capture log messages
+log_stream = StringIO()
+
+# Configure logging
+if not logging.getLogger().hasHandlers():
+    logging.basicConfig(level=logging.INFO, stream=log_stream, format='%(asctime)s - %(message)s')
+
+
+# Define a custom logging handler to write logs to Streamlit
+class StreamlitLoggingHandler(logging.Handler):
+    def emit(self, record):
+        log_entry = self.format(record)
+        st.text(log_entry)
+
 logger = logging.getLogger(__name__)
+logger.addHandler(StreamlitLoggingHandler())
 coloredlogs.install(level=config('LOG_LEVEL', 'INFO'), logger=logger)
 
 # --------- Constants ---------
@@ -26,7 +47,7 @@ def qa_data(data):
     assert int(data.isnull().sum().sum()) == 0, "There are missing values in the data"
 
 def test_rolling_features(df):
-    sample_df = df[df['store_nbr'] == 54][df['family'] == 'AUTOMOTIVE']
+    sample_df = df[df['store_nbr'] == 54][df['family'] == 'AUTOMOTIVE'] # TODO: loop over some more families and stores
     for days in DAYS_FOR_FEATURES:
         avg_sales = sample_df.iloc[-(days+1):-1]['sales'].mean()
         avg_sales_feature = sample_df[f'avg_{days}day_per_store_and_family'].iloc[-1]
@@ -79,7 +100,8 @@ def eng_features(train_df):
     return out_df
 
 
-if __name__ == '__main__':
+
+def make_datasets():
     # --------- Load Data ---------
     logger.info("📚 Reading in the raw training data")
     train_df = pd.read_csv('data/raw/train.csv').sort_values(by=['store_nbr', 'family', 'date'])
@@ -131,3 +153,11 @@ if __name__ == '__main__':
     holdout.to_csv('data/processed/holdout.csv', index=False)
 
     logger.info("✅ Done!")
+
+
+with st.expander('Logs 🪵', expanded=True):
+    make_datasets()
+
+with st.expander('The 🛠️ Code'):
+    with open('views/make_dataset.py') as f:
+        st.code(f.read())
